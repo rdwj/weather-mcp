@@ -1,0 +1,38 @@
+name: weather_comparison
+description: Compare weather conditions between multiple locations
+prompt: |
+  Compare the weather conditions between the following locations:
+
+  {locations_data}
+
+  Provide a comprehensive comparison that includes:
+
+  1. TEMPERATURE COMPARISON:
+     - Which location is warmest/coolest
+     - Temperature differences between locations
+     - Feels-like temperature variations
+
+  2. WEATHER CONDITIONS:
+     - Current sky conditions at each location
+     - Precipitation differences
+     - Which location has the best/worst weather
+
+  3. WIND & HUMIDITY:
+     - Wind speed variations
+     - Humidity comfort levels
+     - Impact on outdoor activities
+
+  4. TRAVEL CONSIDERATIONS:
+     - Best location for specific activities (beach, hiking, sports, etc.)
+     - Weather-related travel advisories
+     - Driving or flying conditions between locations
+
+  5. RECOMMENDATIONS:
+     - Which location is preferable for various activities
+     - Timing considerations (if forecasts are available)
+     - Special considerations for each location
+
+  Output Style: {comparison_style}
+
+  Present the comparison in a clear, organized manner that makes it easy to
+  understand the differences and make decisions based on weather preferences.

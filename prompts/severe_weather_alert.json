@@ -1,0 +1,86 @@
+{
+  "type": "object",
+  "properties": {
+    "severity_level": {
+      "type": "string",
+      "enum": ["SEVERE", "MODERATE", "MINOR", "NORMAL"],
+      "description": "Overall severity classification"
+    },
+    "immediate_hazards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "hazard": {
+            "type": "string",
+            "description": "Type of hazard"
+          },
+          "details": {
+            "type": "string",
+            "description": "Specific details about the hazard"
+          },
+          "urgency": {
+            "type": "string",
+            "enum": ["IMMEDIATE", "WITHIN_HOURS", "TODAY", "MONITORING"],
+            "description": "Time urgency of the hazard"
+          }
+        },
+        "required": ["hazard", "details", "urgency"]
+      },
+      "description": "List of immediate weather hazards"
+    },
+    "health_safety_concerns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "concern": {
+            "type": "string",
+            "description": "Health or safety concern"
+          },
+          "affected_groups": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Groups particularly affected"
+          },
+          "precautions": {
+            "type": "string",
+            "description": "Recommended precautions"
+          }
+        },
+        "required": ["concern", "precautions"]
+      }
+    },
+    "travel_impacts": {
+      "type": "object",
+      "properties": {
+        "driving": {
+          "type": "string",
+          "description": "Impact on driving conditions"
+        },
+        "aviation": {
+          "type": "string",
+          "description": "Potential aviation impacts"
+        },
+        "marine": {
+          "type": "string",
+          "description": "Marine/boating conditions"
+        }
+      }
+    },
+    "recommended_actions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of specific recommended actions"
+    },
+    "summary": {
+      "type": "string",
+      "description": "Brief summary of the overall weather situation"
+    }
+  },
+  "required": ["severity_level", "summary", "recommended_actions"]
+}

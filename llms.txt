@@ -1,0 +1,269 @@
+# Weather MCP Server - AI Assistant Guide
+
+## Overview
+This is a production-ready MCP (Model Context Protocol) server that provides real-time weather data, forecasting tools, and weather report generation prompts. It uses official NOAA/NWS data for US weather and OpenStreetMap for geocoding.
+
+## Quick Start for Developers
+
+### If MCP Server is Already Deployed
+Skip to "Creating a FastMCP Client" section below.
+
+### If You Need to Deploy
+1. Clone this repository
+2. Follow README.md for deployment instructions
+3. For local testing: `make run-local`
+4. For OpenShift: `make deploy`
+
+## Available MCP Components
+
+### Tools (3 weather tools)
+```python
+# 1. get_weather(location: str) -> Dict[str, Any]
+# Returns current weather for a city/state location
+# Example: location="Seattle, WA"
+# Returns: temperature, conditions, forecast, humidity, wind
+
+# 2. get_weather_from_coordinates(lat: float, lon: float) -> Dict[str, Any]
+# Returns weather for specific coordinates
+# Example: lat=47.6062, lon=-122.3321
+# Returns: same as above plus coordinates
+
+# 3. geocode_location(city: str, state: Optional[str]) -> Dict[str, Any]
+# Converts city name to coordinates
+# Example: city="Seattle", state="WA"
+# Returns: city, state, lat, lon
+```
+
+### Resources (4 citation/info resources)
+```python
+# citations://weather-api - Weather.gov API citation info
+# citations://geocode-api - OpenStreetMap Nominatim citation
+# citations://all - All API citations combined
+# info://data-sources - Comprehensive data source information
+```
+
+### Prompts (4 weather report prompts)
+```yaml
+# weather_report - Generate professional weather reports
+# severe_weather_alert - Analyze severe/concerning conditions
+# weather_comparison - Compare weather between locations
+# daily_forecast_brief - Create daily weather briefings
+```
+
+## Creating a FastMCP Client
+
+### Basic Client Setup
+```python
+from fastmcp.client import FastMCPClient
+
+# For STDIO transport (local development)
+async with FastMCPClient(
+    command=".venv/bin/python -m src.main",
+    transport="stdio"
+) as client:
+    # Use client
+    pass
+
+# For HTTP transport (deployed server)
+async with FastMCPClient(
+    url="https://weather-mcp-server.example.com/mcp/",
+    transport="http"
+) as client:
+    # Use client
+    pass
+```
+
+### Using Weather Tools
+```python
+# Get current weather
+weather = await client.call_tool(
+    "get_weather",
+    {"location": "Seattle, WA"}
+)
+# Returns dict with temperature, conditions, humidity, etc.
+
+# Get weather by coordinates
+weather = await client.call_tool(
+    "get_weather_from_coordinates",
+    {"lat": 47.6062, "lon": -122.3321}
+)
+
+# Geocode a location
+coords = await client.call_tool(
+    "geocode_location",
+    {"city": "Phoenix", "state": "AZ"}
+)
+# Returns: {"city": "Phoenix", "state": "AZ", "lat": 33.4484, "lon": -112.0740}
+```
+
+### Using Weather Prompts
+```python
+# Get weather report prompt
+prompt = await client.get_prompt("weather_report")
+
+# Fill in variables
+filled_prompt = prompt.messages[0].content.text.replace(
+    "{weather_data}",
+    json.dumps(weather_data)
+).replace(
+    "{output_format}",
+    "paragraph format"
+)
+
+# Send to LLM for generation
+report = await llm.generate(filled_prompt)
+```
+
+### Using Resources for Citations
+```python
+# Get citation info for proper attribution
+citation = await client.read_resource("citations://weather-api")
+# Returns JSON with API details, terms of use, citation text
+
+# Get all data source info
+sources = await client.read_resource("info://data-sources")
+# Returns comprehensive info about reliability, update frequency, etc.
+```
+
+## Complete Weather Agent Example
+```python
+from fastmcp.client import FastMCPClient
+import json
+
+async def generate_weather_report(location: str):
+    """Generate a complete weather report for a location."""
+
+    async with FastMCPClient(url="http://localhost:8080/mcp/") as client:
+        # 1. Get current weather data
+        weather = await client.call_tool(
+            "get_weather",
+            {"location": location}
+        )
+
+        # 2. Get the weather report prompt
+        prompt_data = await client.get_prompt("weather_report")
+
+        # 3. Fill in prompt variables
+        prompt_text = prompt_data.messages[0].content.text
+        prompt_text = prompt_text.replace(
+            "{weather_data}",
+            json.dumps(weather)
+        ).replace(
+            "{output_format}",
+            "detailed paragraph format"
+        )
+
+        # 4. Generate report with LLM
+        report = await your_llm.generate(prompt_text)
+
+        # 5. Add attribution
+        citation = await client.read_resource("citations://all")
+
+        return f"{report}\n\nData Sources: {citation['summary']['attribution_statement']}"
+```
+
+## Important Implementation Notes
+
+### Weather Data Structure
+All weather tools return dictionaries with:
+- `location`: City, State string
+- `temperature`: String with F and C (e.g., "72.5°F (22.5°C)")
+- `conditions`: Current conditions description
+- `forecast`: Text forecast for current period
+- `humidity`: Percentage string (e.g., "65.0%")
+- `wind`: Speed and direction string
+- `timestamp`: ISO 8601 timestamp
+- `source`: Data source (always "Weather.gov")
+
+### Rate Limits and Best Practices
+- Weather.gov API: No auth required, be reasonable
+- OpenStreetMap Nominatim: Max 1 request/second
+- Cache responses when appropriate
+- US locations only for weather data
+- Worldwide geocoding available
+
+### Error Handling
+```python
+try:
+    weather = await client.call_tool("get_weather", {"location": "InvalidCity, XX"})
+except Exception as e:
+    # Handle location not found or API errors
+    print(f"Weather error: {e}")
+```
+
+### Prompt Variables
+When using prompts, these variables need replacement:
+- `{weather_data}`: JSON of current weather
+- `{weather_alerts}`: JSON of active alerts (if using severe_weather_alert)
+- `{locations_data}`: JSON array of locations (if using weather_comparison)
+- `{output_format}`: Desired format (paragraph, JSON, table, etc.)
+- `{target_audience}`: Who the report is for (if using daily_forecast_brief)
+- `{output_schema}`: Automatically injected if present (don't replace)
+
+## Testing Your Integration
+
+### Quick Test Script
+```python
+import asyncio
+from fastmcp.client import FastMCPClient
+
+async def test_weather_mcp():
+    async with FastMCPClient(command=".venv/bin/python -m src.main") as client:
+        # List available tools
+        tools = await client.list_tools()
+        print(f"Available tools: {[t.name for t in tools]}")
+
+        # Test weather lookup
+        weather = await client.call_tool(
+            "get_weather",
+            {"location": "Seattle, WA"}
+        )
+        print(f"Seattle weather: {weather['temperature']}, {weather['conditions']}")
+
+        # Test prompts
+        prompts = await client.list_prompts()
+        print(f"Available prompts: {[p.name for p in prompts]}")
+
+asyncio.run(test_weather_mcp())
+```
+
+## Deployment Configurations
+
+### Local Development (STDIO)
+```bash
+MCP_TRANSPORT=stdio
+MCP_HOT_RELOAD=1
+# Run: .venv/bin/python -m src.main
+```
+
+### OpenShift/Production (HTTP)
+```bash
+MCP_TRANSPORT=http
+MCP_HTTP_HOST=0.0.0.0
+MCP_HTTP_PORT=8080
+MCP_HTTP_PATH=/mcp/
+# Deployed at: https://your-route/mcp/
+```
+
+## Common Use Cases
+
+1. **Weather Dashboard**: Use comparison prompt with multiple cities
+2. **Travel Planning**: Get weather for destination coordinates
+3. **Alert Monitoring**: Use severe_weather_alert prompt with current data
+4. **Daily Briefings**: Combine current weather with forecast data
+5. **Location Services**: Geocode cities before weather lookups
+
+## Troubleshooting
+
+- **"Location not found"**: City name might be misspelled or too small
+- **Empty wind data**: Some stations don't report wind continuously
+- **Old timestamps**: Weather stations update hourly, data may be 10-60 min old
+- **No forecast**: Ensure you're using US locations only
+- **Connection errors**: Check if MCP server is running and accessible
+
+## Need More Help?
+
+1. Check README.md for deployment details
+2. Review ARCHITECTURE.md for system design
+3. See TESTING.md for testing procedures
+4. Look at tests/test_prompts_ollama.py for example usage
