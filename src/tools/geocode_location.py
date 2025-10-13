@@ -1,31 +1,49 @@
-from core.app import mcp
+"""Convert city names to geographic coordinates."""
+
+from typing import Annotated, Optional
 from fastmcp import Context
+from core.app import mcp
 from .weather_client import WeatherGovClient
-from typing import Optional, Dict, Any
+from .models import GeocodeData
 
 weather_client = WeatherGovClient()
 
-@mcp.tool
-async def geocode_location(city: str, state: Optional[str] = None, ctx: Optional[Context] = None) -> Dict[str, Any]:
+
+@mcp.tool(
+    annotations={
+        "readOnlyHint": True,
+        "openWorldHint": True
+    }
+)
+async def geocode_location(
+    city: Annotated[str, "City name to geocode (e.g., 'Seattle', 'Brownwood')"],
+    state: Annotated[Optional[str], "State code or full name (optional, e.g., 'TX', 'Texas', 'WA')"] = None,
+    ctx: Optional[Context] = None
+) -> GeocodeData:
     """Convert a city name to geographic coordinates.
+
+    Uses the OpenStreetMap Nominatim API to convert city and state names
+    into latitude and longitude coordinates. The state parameter is optional
+    but recommended for more accurate results, especially for common city names.
 
     Args:
         city: City name to geocode (e.g., "Seattle", "Brownwood")
         state: State code or full name (optional, e.g., "TX", "Texas", "WA")
+        ctx: Optional MCP context for logging
 
     Returns:
-        Dictionary containing:
-            - city (str): The input city name
-            - state (str): The resolved state/region name
-            - lat (float): Latitude coordinate
-            - lon (float): Longitude coordinate
+        GeocodeData object containing:
+            - city: The input city name
+            - state: The resolved state/region name
+            - lat: Latitude coordinate
+            - lon: Longitude coordinate
     """
     if ctx:
         await ctx.info(f"Geocoding location: {city}" + (f", {state}" if state else ""))
 
     try:
         geocode_data = weather_client.geocode_city(city, state)
-        return geocode_data
+        return GeocodeData(**geocode_data)
     except Exception as e:
         error_msg = f"Error geocoding location {city}: {str(e)}"
         if ctx:

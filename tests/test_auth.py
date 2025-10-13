@@ -4,6 +4,7 @@ from pathlib import Path
 
 import jwt
 import pytest
+import anyio
 
 
 # Ensure we can import from src/
@@ -37,38 +38,42 @@ def _make_token(payload: dict) -> str:
     return jwt.encode(payload, os.getenv("MCP_AUTH_JWT_SECRET", "test-secret"), algorithm=os.getenv("MCP_AUTH_JWT_ALG", "HS256"))
 
 
-@pytest.mark.asyncio
-async def test_requires_scopes_allows_when_present():
+def test_requires_scopes_allows_when_present():
     @requires_scopes("read")
     async def secured(ctx=None):
         return {"ok": True}
 
-    token = _make_token({"scope": "read"})
-    ctx = _DummyCtx({"Authorization": f"Bearer {token}"})
-    result = await secured(ctx=ctx)
-    assert result == {"ok": True}
+    async def _test():
+        token = _make_token({"scope": "read"})
+        ctx = _DummyCtx({"Authorization": f"Bearer {token}"})
+        result = await secured(ctx=ctx)
+        assert result == {"ok": True}
+
+    anyio.run(_test)
 
 
-@pytest.mark.asyncio
-async def test_requires_scopes_denies_when_missing():
+def test_requires_scopes_denies_when_missing():
     @requires_scopes("admin")
     async def secured(ctx=None):
         return {"ok": True}
 
-    token = _make_token({"scope": "read write"})
-    ctx = _DummyCtx({"Authorization": f"Bearer {token}"})
-    result = await secured(ctx=ctx)
-    assert result.get("error") == "forbidden"
-    assert "admin" in result.get("missing", [])
+    async def _test():
+        token = _make_token({"scope": "read write"})
+        ctx = _DummyCtx({"Authorization": f"Bearer {token}"})
+        result = await secured(ctx=ctx)
+        assert result.get("error") == "forbidden"
+        assert "admin" in result.get("missing", [])
+
+    anyio.run(_test)
 
 
-@pytest.mark.asyncio
-async def test_requires_scopes_missing_context():
+def test_requires_scopes_missing_context():
     @requires_scopes("read")
     async def secured():
         return {"ok": True}
 
-    result = await secured()
-    assert result.get("error") == "missing context for auth"
+    async def _test():
+        result = await secured()
+        assert result.get("error") == "missing context for auth"
 
-
+    anyio.run(_test)

@@ -12,7 +12,7 @@ def test_load_tools_resources_prompts(tmp_path: Path):
     src_base = tmp_path / "src"
     tools_dir = src_base / "tools"
     resources_dir = src_base / "resources"
-    prompts_dir = tmp_path / "prompts"
+    prompts_dir = src_base / "prompts"
 
     tools_dir.mkdir(parents=True)
     resources_dir.mkdir(parents=True)
@@ -20,7 +20,7 @@ def test_load_tools_resources_prompts(tmp_path: Path):
 
     # Write a simple tool
     (tools_dir / "t1.py").write_text(
-        "from core.app import mcp\nfrom fastmcp import Context\n@mcp.tool\nasync def t1(x: int, ctx: Context) -> int:\n    await ctx.debug('adding one')\n    return x + 1\n"
+        "from core.app import mcp\nfrom fastmcp import Context\nfrom typing import Optional\n@mcp.tool\nasync def t1(x: int, ctx: Optional[Context] = None) -> int:\n    if ctx:\n        await ctx.debug('adding one')\n    return x + 1\n"
     )
 
     # Write a simple resource
@@ -28,11 +28,10 @@ def test_load_tools_resources_prompts(tmp_path: Path):
         "from core.app import mcp\n@mcp.resource(\"resource://r1\")\ndef r1() -> str:\n    return 'ok'\n"
     )
 
-    # YAML + JSON schema
-    (prompts_dir / "p1.yaml").write_text(
-        "name: demo\nprompt: |\n  <output_schema>{output_schema}</output_schema>\n  Hello {name}\n"
+    # Write a Python prompt (new system)
+    (prompts_dir / "p1.py").write_text(
+        "from core.app import mcp\n@mcp.prompt\ndef demo(name: str) -> str:\n    return f'Hello {name}'\n"
     )
-    (prompts_dir / "p1.json").write_text('{"type":"object","properties":{"ok":{"type":"boolean"}},"required":["ok"]}')
 
     # Ensure import path includes temp src
     sys.path.insert(0, str(src_base))
