@@ -6,11 +6,24 @@ from core.app import mcp
 
 @mcp.prompt
 def weather_report(
-    weather_data: dict = Field(
-        description="Weather data as a dictionary containing current conditions"
+    weather_data: dict[str, str] = Field(
+        description=(
+            "Weather data as a dictionary with string keys and values "
+            "(e.g., location, temperature, conditions, humidity, wind). "
+            "Pass as JSON string."
+        )
     ),
-    output_format: str = "narrative",
-    output_schema: str = ""
+    output_format: str = Field(
+        default="narrative",
+        description=(
+            "Desired output format: 'narrative' (default), "
+            "'structured', or 'brief'"
+        )
+    ),
+    output_schema: str = Field(
+        default="",
+        description="Optional JSON schema string defining the structure for structured output"
+    )
 ) -> str:
     """Generate a professional weather report from current conditions.
 
@@ -47,13 +60,19 @@ Include relevant safety advisories if severe conditions are present.{schema_sect
 
 @mcp.prompt
 def daily_forecast_brief(
-    current_weather: dict = Field(
-        description="Current weather conditions as a dictionary"
+    current_weather: dict[str, str] = Field(
+        description="Current weather conditions as a dictionary with string keys and values"
     ),
-    forecast_data: dict = Field(
+    forecast_data: dict[str, str] = Field(
         description="Forecast data as a dictionary with hourly/daily predictions"
     ),
-    target_audience: str = "general public"
+    target_audience: str = Field(
+        default="general public",
+        description=(
+            "Target audience for the briefing: 'general public' (default), "
+            "'commuters', or 'outdoor workers'"
+        )
+    )
 ) -> str:
     """Create a daily weather briefing from current conditions and forecast.
 
@@ -108,10 +127,20 @@ weather changes that might affect plans."""
 
 @mcp.prompt
 def weather_comparison(
-    locations_data: dict = Field(
-        description="Weather data for multiple locations as a dictionary with location names as keys"
+    locations_data: dict[str, str] = Field(
+        description=(
+            "Weather data for multiple locations as a dictionary with "
+            "location names as keys. Each location maps to its weather "
+            "data as a JSON string."
+        )
     ),
-    comparison_style: str = "detailed"
+    comparison_style: str = Field(
+        default="detailed",
+        description=(
+            "Style of comparison: 'detailed' (default), "
+            "'summary', 'table', or 'highlights'"
+        )
+    )
 ) -> str:
     """Compare weather conditions between multiple locations.
 
@@ -161,10 +190,13 @@ understand the differences and make decisions based on weather preferences."""
 
 @mcp.prompt
 def severe_weather_alert(
-    weather_data: dict = Field(
-        description="Current weather data as a dictionary"
+    weather_data: dict[str, str] = Field(
+        description="Current weather data as a dictionary with string keys and values"
     ),
-    weather_alerts: dict | str = "None"
+    weather_alerts: str = Field(
+        default="None",
+        description="Active weather alerts as a JSON string, or 'None' if no alerts present"
+    )
 ) -> str:
     """Analyze weather data and alerts for severe or concerning conditions.
 
