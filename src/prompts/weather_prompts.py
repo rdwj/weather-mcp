@@ -6,11 +6,11 @@ from core.app import mcp
 
 @mcp.prompt
 def weather_report(
-    weather_data: dict[str, str] = Field(
+    weather_data: dict[str, str | None] = Field(
         description=(
-            "Weather data as a dictionary with string keys and values "
+            "Weather data as a dictionary with string keys and optional values "
             "(e.g., location, temperature, conditions, humidity, wind). "
-            "Pass as JSON string."
+            "Pass as JSON string. None/null values are acceptable and will be ignored."
         )
     ),
     output_format: str = Field(
@@ -60,11 +60,11 @@ Include relevant safety advisories if severe conditions are present.{schema_sect
 
 @mcp.prompt
 def daily_forecast_brief(
-    current_weather: dict[str, str] = Field(
-        description="Current weather conditions as a dictionary with string keys and values"
+    current_weather: dict[str, str | None] = Field(
+        description="Current weather conditions as a dictionary with string keys and optional values. None/null values are acceptable."
     ),
-    forecast_data: dict[str, str] = Field(
-        description="Forecast data as a dictionary with hourly/daily predictions"
+    forecast_data: dict[str, str | None] = Field(
+        description="Forecast data as a dictionary with hourly/daily predictions. None/null values are acceptable."
     ),
     target_audience: str = Field(
         default="general public",
@@ -127,11 +127,11 @@ weather changes that might affect plans."""
 
 @mcp.prompt
 def weather_comparison(
-    locations_data: dict[str, str] = Field(
+    locations_data: dict[str, str | None] = Field(
         description=(
             "Weather data for multiple locations as a dictionary with "
             "location names as keys. Each location maps to its weather "
-            "data as a JSON string."
+            "data as a JSON string. None/null values are acceptable."
         )
     ),
     comparison_style: str = Field(
@@ -190,8 +190,8 @@ understand the differences and make decisions based on weather preferences."""
 
 @mcp.prompt
 def severe_weather_alert(
-    weather_data: dict[str, str] = Field(
-        description="Current weather data as a dictionary with string keys and values"
+    weather_data: dict[str, str | None] = Field(
+        description="Current weather data as a dictionary with string keys and optional values. None/null values are acceptable."
     ),
     weather_alerts: str = Field(
         default="None",

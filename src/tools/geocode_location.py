@@ -19,7 +19,7 @@ async def geocode_location(
     city: Annotated[str, "City name to geocode (e.g., 'Seattle', 'Brownwood')"],
     state: Annotated[Optional[str], "State code or full name (optional, e.g., 'TX', 'Texas', 'WA')"] = None,
     ctx: Optional[Context] = None
-) -> GeocodeData:
+) -> dict:
     """Convert a city name to geographic coordinates.
 
     Uses the OpenStreetMap Nominatim API to convert city and state names
@@ -32,7 +32,7 @@ async def geocode_location(
         ctx: Optional MCP context for logging
 
     Returns:
-        GeocodeData object containing:
+        Dictionary containing geocoding results (None values excluded):
             - city: The input city name
             - state: The resolved state/region name
             - lat: Latitude coordinate
@@ -43,7 +43,8 @@ async def geocode_location(
 
     try:
         geocode_data = weather_client.geocode_city(city, state)
-        return GeocodeData(**geocode_data)
+        geocode_obj = GeocodeData(**geocode_data)
+        return geocode_obj.to_prompt_dict()
     except Exception as e:
         error_msg = f"Error geocoding location {city}: {str(e)}"
         if ctx:

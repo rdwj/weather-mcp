@@ -31,14 +31,27 @@ fi
 echo "→ Applying OpenShift resources..."
 sed "s|image: mcp-server:latest|image: image-registry.openshift-image-registry.svc:5000/$PROJECT/mcp-server:latest|g" openshift.yaml | oc apply -f - -n $PROJECT
 
+# Clean up old deployment
+echo "→ Cleaning up old deployment..."
+if oc get deployment mcp-server -n $PROJECT &>/dev/null; then
+    echo "  Scaling down deployment to remove old pods..."
+    oc scale deployment/mcp-server --replicas=0 -n $PROJECT 2>/dev/null || true
+    echo "  Waiting for pods to terminate..."
+    oc wait --for=delete pod -l app=mcp-server -n $PROJECT --timeout=60s 2>/dev/null || echo "  No pods to clean up"
+else
+    echo "  No existing deployment found"
+fi
+
 # Start build
 echo "→ Building container image..."
 echo "  Starting binary build from current directory..."
 oc start-build mcp-server --from-dir=. --follow -n $PROJECT
 
-# Wait for rollout
+# Scale back up and deploy
 echo "→ Deploying application..."
-oc rollout restart deployment/mcp-server -n $PROJECT 2>/dev/null || true
+echo "  Scaling deployment to 1 replica..."
+oc scale deployment/mcp-server --replicas=1 -n $PROJECT
+echo "  Waiting for rollout to complete..."
 oc rollout status deployment/mcp-server -n $PROJECT --timeout=300s
 
 # Get route
@@ -49,10 +62,12 @@ echo "========================================="
 echo "✅ Deployment Complete!"
 echo "========================================="
 if [ -n "$ROUTE" ]; then
-    echo "MCP Server URL: https://$ROUTE/mcp/"
+    echo "MCP Server URL: https://$ROUTE/"
     echo ""
     echo "Test with MCP Inspector:"
-    echo "  npx @modelcontextprotocol/inspector https://$ROUTE/mcp/"
+    echo "  npx @modelcontextprotocol/inspector https://$ROUTE/"
+    echo ""
+    echo "Note: Route is configured to serve MCP at /mcp path"
 else
     echo "Warning: Could not retrieve route URL"
 fi

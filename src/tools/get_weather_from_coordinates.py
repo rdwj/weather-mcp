@@ -20,7 +20,7 @@ async def get_weather_from_coordinates(
     lat: Annotated[float, Field(ge=-90, le=90, description="Latitude coordinate (-90 to 90)")],
     lon: Annotated[float, Field(ge=-180, le=180, description="Longitude coordinate (-180 to 180)")],
     ctx: Optional[Context] = None
-) -> WeatherData:
+) -> dict:
     """Get weather data from latitude and longitude coordinates.
 
     Retrieves current weather conditions and forecast from Weather.gov API
@@ -34,7 +34,7 @@ async def get_weather_from_coordinates(
         ctx: Optional MCP context for logging
 
     Returns:
-        WeatherData object containing:
+        Dictionary containing weather data (None values excluded):
             - location: The resolved location name
             - temperature: Current temperature in both Fahrenheit and Celsius
             - conditions: Current weather conditions description
@@ -50,7 +50,8 @@ async def get_weather_from_coordinates(
 
     try:
         weather_data = weather_client.get_weather_by_coordinates(lat, lon)
-        return WeatherData(**weather_data)
+        weather_obj = WeatherData(**weather_data)
+        return weather_obj.to_prompt_dict()
     except Exception as e:
         error_msg = f"Error getting weather for coordinates ({lat}, {lon}): {str(e)}"
         if ctx:

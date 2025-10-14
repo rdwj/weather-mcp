@@ -38,6 +38,7 @@ spec:
       containers:
       - name: mcp-server
         image: mcp-server:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
           protocol: TCP
@@ -85,6 +86,7 @@ kind: Route
 metadata:
   name: mcp-server
 spec:
+  path: /mcp
   to:
     kind: Service
     name: mcp-server

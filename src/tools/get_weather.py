@@ -18,7 +18,7 @@ weather_client = WeatherGovClient()
 async def get_weather(
     location: Annotated[str, "Location to get weather for (city, state format, e.g., 'Seattle, WA')"],
     ctx: Optional[Context] = None
-) -> WeatherData:
+) -> dict:
     """Get current weather for a location.
 
     Retrieves current weather conditions and forecast from Weather.gov API
@@ -30,7 +30,7 @@ async def get_weather(
         ctx: Optional MCP context for logging
 
     Returns:
-        WeatherData object containing:
+        Dictionary containing weather data (None values excluded):
             - location: The location name
             - temperature: Current temperature in both Fahrenheit and Celsius
             - conditions: Current weather conditions description
@@ -45,7 +45,8 @@ async def get_weather(
 
     try:
         weather_data = weather_client.get_weather_by_location(location)
-        return WeatherData(**weather_data)
+        weather_obj = WeatherData(**weather_data)
+        return weather_obj.to_prompt_dict()
     except Exception as e:
         error_msg = f"Error getting weather for {location}: {str(e)}"
         if ctx:

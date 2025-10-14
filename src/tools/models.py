@@ -25,6 +25,14 @@ class WeatherData(BaseModel):
         description="Geographic coordinates (only present when queried by coordinates)"
     )
 
+    def to_prompt_dict(self) -> dict:
+        """Serialize to dictionary for MCP prompts, excluding None values.
+
+        Returns:
+            Dictionary with None values excluded, suitable for prompt parameters
+        """
+        return self.model_dump(exclude_none=True, mode='json')
+
 
 class GeocodeData(BaseModel):
     """Geocoding result with coordinates."""
@@ -32,3 +40,11 @@ class GeocodeData(BaseModel):
     state: str = Field(description="The resolved state/region name")
     lat: float = Field(description="Latitude coordinate")
     lon: float = Field(description="Longitude coordinate")
+
+    def to_prompt_dict(self) -> dict:
+        """Serialize to dictionary for MCP prompts, excluding None values.
+
+        Returns:
+            Dictionary with None values excluded, suitable for prompt parameters
+        """
+        return self.model_dump(exclude_none=True, mode='json')
