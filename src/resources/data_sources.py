@@ -1,15 +1,13 @@
 from core.app import mcp
-import json
 
 
 @mcp.resource("info://data-sources")
-async def get_data_sources() -> str:
+async def get_data_sources() -> dict:
     """Get information about all data sources used by this weather MCP server.
 
     Returns:
-        JSON formatted information about data sources, reliability, and appropriate use cases
+        Dictionary containing data sources, reliability, and appropriate use cases
     """
-
     sources_info = {
         "title": "Weather MCP Server Data Sources",
         "description": "This MCP server aggregates data from multiple authoritative weather sources",
@@ -69,4 +67,4 @@ async def get_data_sources() -> str:
         "legal_disclaimer": "This service aggregates publicly available weather data. While we strive for accuracy, weather conditions can change rapidly. Always use multiple sources and official warnings for safety-critical decisions."
     }
 
-    return json.dumps(sources_info, indent=2)
+    return sources_info

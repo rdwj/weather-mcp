@@ -1,5 +1,4 @@
 from core.app import mcp
-import json
 
 
 def get_citation_data(source: str) -> dict:
@@ -54,31 +53,31 @@ def get_citation_data(source: str) -> dict:
 
 
 @mcp.resource("citations://weather-api")
-async def get_weather_citation() -> str:
+async def get_weather_citation() -> dict:
     """Get citation information for the Weather.gov API.
 
     Returns:
-        JSON formatted citation including API details, terms of use, and attribution requirements
+        Dictionary containing API details, terms of use, and attribution requirements
     """
-    return json.dumps(get_citation_data("weather"), indent=2)
+    return get_citation_data("weather")
 
 
 @mcp.resource("citations://geocode-api")
-async def get_geocode_citation() -> str:
+async def get_geocode_citation() -> dict:
     """Get citation information for the OpenStreetMap Nominatim API.
 
     Returns:
-        JSON formatted citation including API details, terms of use, and attribution requirements
+        Dictionary containing API details, terms of use, and attribution requirements
     """
-    return json.dumps(get_citation_data("geocode"), indent=2)
+    return get_citation_data("geocode")
 
 
 @mcp.resource("citations://all")
-async def get_all_citations() -> str:
+async def get_all_citations() -> dict:
     """Get citation information for all APIs used by this weather service.
 
     Returns:
-        JSON formatted citations for all data sources with attribution requirements
+        Dictionary containing citations for all data sources with attribution requirements
     """
     all_citations = {
         "weather_api": get_citation_data("weather"),
@@ -94,4 +93,4 @@ async def get_all_citations() -> str:
             ]
         }
     }
-    return json.dumps(all_citations, indent=2)
+    return all_citations
