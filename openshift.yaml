@@ -61,6 +61,12 @@ spec:
           value: "8080"
         - name: MCP_HTTP_PATH
           value: "/mcp/"
+        - name: NOAA_CDO_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: weather-mcp-secrets
+              key: noaa-cdo-token
+              optional: true
         resources:
           limits:
             memory: "512Mi"

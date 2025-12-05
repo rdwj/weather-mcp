@@ -27,6 +27,21 @@ else
     oc new-project $PROJECT
 fi
 
+# Create secret from .env if it exists and has NOAA key
+if [ -f .env ]; then
+    NOAA_KEY=$(grep -E '^NOAA_CDO_TOKEN=' .env 2>/dev/null | cut -d'=' -f2 | tr -d '"' || true)
+    if [ -n "$NOAA_KEY" ]; then
+        echo "→ Creating/updating weather-mcp-secrets..."
+        oc create secret generic weather-mcp-secrets \
+            --from-literal=noaa-cdo-token="$NOAA_KEY" \
+            --dry-run=client -o yaml | oc apply -f - -n $PROJECT
+    else
+        echo "→ No NOAA_CDO_TOKEN in .env, historical weather will not be available"
+    fi
+else
+    echo "→ No .env file found, historical weather will not be available"
+fi
+
 # Apply OpenShift resources
 echo "→ Applying OpenShift resources..."
 sed "s|image: mcp-server:latest|image: image-registry.openshift-image-registry.svc:5000/$PROJECT/mcp-server:latest|g" openshift.yaml | oc apply -f - -n $PROJECT
